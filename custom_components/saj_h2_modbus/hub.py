@@ -123,6 +123,7 @@ _READER_GROUPS = [
         modbus_readers.read_inverter_settings_data,
     ],
     [modbus_readers.read_charge_data, modbus_readers.read_discharge_data],
+    [modbus_readers.read_ev_charger_realtime, modbus_readers.read_ev_charger_config],
 ]
 
 

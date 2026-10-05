@@ -2030,6 +2030,133 @@ inverter_settings_sensors = [
     },
 ]
 
+# --- EV Charger Sensors (HS3 with integrated charger) ---
+# Auto-excluded on non-HS3 devices after 3 consecutive failures.
+
+ev_charger_power_sensors = [
+    {
+        "name": "EV Charge Power",
+        "key": "ev_charge_power",
+        "icon": "ev-station",
+        "enable": True,
+    },
+    {
+        "name": "EV Max Charge Power",
+        "key": "ev_max_charge_power",
+        "icon": "ev-station",
+        "enable": True,
+    },
+    {
+        "name": "EV Dynamic Power Limit",
+        "key": "ev_dynamic_power_limit",
+        "icon": "ev-station",
+        "enable": True,
+    },
+]
+
+ev_charger_voltage_sensors = [
+    {
+        "name": "EV Voltage L1",
+        "key": "ev_voltage_l1",
+        "icon": "sine-wave",
+        "enable": True,
+    },
+    {
+        "name": "EV Voltage L2",
+        "key": "ev_voltage_l2",
+        "icon": "sine-wave",
+        "enable": True,
+    },
+    {
+        "name": "EV Voltage L3",
+        "key": "ev_voltage_l3",
+        "icon": "sine-wave",
+        "enable": True,
+    },
+]
+
+ev_charger_current_sensors = [
+    {
+        "name": "EV Current L1",
+        "key": "ev_current_l1",
+        "icon": "current-ac",
+        "enable": True,
+    },
+    {
+        "name": "EV Current L2",
+        "key": "ev_current_l2",
+        "icon": "current-ac",
+        "enable": True,
+    },
+    {
+        "name": "EV Current L3",
+        "key": "ev_current_l3",
+        "icon": "current-ac",
+        "enable": True,
+    },
+    {
+        "name": "EV Max Current Capacity",
+        "key": "ev_max_current",
+        "icon": "current-ac",
+        "enable": True,
+    },
+]
+
+ev_charger_energy_sensors = [
+    {
+        "name": "EV Session Energy",
+        "key": "ev_session_energy",
+        "icon": "ev-station",
+        "enable": True,
+        "unit_of_measurement": UnitOfEnergy.WATT_HOUR,
+    },
+]
+
+ev_charger_info_sensors = [
+    {
+        "name": "EV Charger State",
+        "key": "ev_charger_state",
+        "icon": "ev-plug-type2",
+        "enable": True,
+    },
+    {
+        "name": "EV Charger State Text",
+        "key": "ev_charger_state_text",
+        "icon": "ev-plug-type2",
+        "enable": True,
+    },
+    {
+        "name": "EV Charge Mode",
+        "key": "ev_charge_mode",
+        "icon": "ev-station",
+        "enable": True,
+    },
+    {
+        "name": "EV Charge Mode Text",
+        "key": "ev_charge_mode_text",
+        "icon": "ev-station",
+        "enable": True,
+    },
+    {
+        "name": "EV Charge Strategy",
+        "key": "ev_charge_strategy",
+        "icon": "cog-outline",
+        "enable": True,
+    },
+    {
+        "name": "EV Charge Strategy Text",
+        "key": "ev_charge_strategy_text",
+        "icon": "cog-outline",
+        "enable": True,
+    },
+    {
+        "name": "EV Charge Strategy (Read-Only)",
+        "key": "ev_charge_strategy_ro",
+        "icon": "cog-outline",
+        "enable": False,
+    },
+]
+
 SENSOR_TYPES = {
     **create_sensor_descriptions(power_sensors_group, power_sensors),
     **create_sensor_descriptions(apparent_power_sensors_group, apparent_power_sensors),
@@ -2051,6 +2178,14 @@ SENSOR_TYPES = {
     **create_sensor_descriptions(information_sensors_group, anti_reflux_sensors),
     **create_sensor_descriptions(power_factor_sensors_group, power_factor_sensors),
     **create_sensor_descriptions(information_sensors_group, inverter_settings_sensors),
+    # EV Charger (HS3)
+    **create_sensor_descriptions(power_sensors_group, ev_charger_power_sensors),
+    **create_sensor_descriptions(voltage_sensors_group, ev_charger_voltage_sensors),
+    **create_sensor_descriptions(current_sensors_group, ev_charger_current_sensors),
+    **create_sensor_descriptions(
+        energy_sensors_total_increasing_group, ev_charger_energy_sensors
+    ),
+    **create_sensor_descriptions(information_sensors_group, ev_charger_info_sensors),
 }
 
 DEVICE_STATUSSES = {

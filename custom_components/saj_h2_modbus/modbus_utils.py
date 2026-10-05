@@ -605,24 +605,27 @@ async def _try_modbus_operation(
         ) from final_e
 
 
-async def try_read_registers(
+async def _try_read_registers_impl(
     client: ModbusTcpClient,
     lock: Lock,
     unit: int,
     address: int,
     count: int,
+    read_method: str,
     max_retries: int = DEFAULT_READ_RETRIES,
     base_delay: float = DEFAULT_READ_BASE_DELAY,
     cap_delay: float = DEFAULT_READ_CAP_DELAY,
 ) -> list[int]:
+    operation = getattr(client, read_method)
+
     async def read_once():
         if ENABLE_DETAILED_MODBUS_READ_LOGGING:
-            _LOGGER.debug("[read] unit=%s addr=%s count=%s", unit, hex(address), count)
+            _LOGGER.debug("[read] unit=%s addr=%s count=%s method=%s", unit, hex(address), count, read_method)
         response = await _perform_modbus_operation(
             client,
             lock,
             unit,
-            client.read_holding_registers,
+            operation,
             address=address,
             count=count,
         )
@@ -660,6 +663,40 @@ async def try_read_registers(
         max_retries=max_retries,
         base_delay=base_delay,
         cap_delay=cap_delay,
+    )
+
+
+async def try_read_registers(
+    client: ModbusTcpClient,
+    lock: Lock,
+    unit: int,
+    address: int,
+    count: int,
+    max_retries: int = DEFAULT_READ_RETRIES,
+    base_delay: float = DEFAULT_READ_BASE_DELAY,
+    cap_delay: float = DEFAULT_READ_CAP_DELAY,
+) -> list[int]:
+    return await _try_read_registers_impl(
+        client, lock, unit, address, count,
+        "read_holding_registers",
+        max_retries, base_delay, cap_delay,
+    )
+
+
+async def try_read_input_registers(
+    client: ModbusTcpClient,
+    lock: Lock,
+    unit: int,
+    address: int,
+    count: int,
+    max_retries: int = DEFAULT_READ_RETRIES,
+    base_delay: float = DEFAULT_READ_BASE_DELAY,
+    cap_delay: float = DEFAULT_READ_CAP_DELAY,
+) -> list[int]:
+    return await _try_read_registers_impl(
+        client, lock, unit, address, count,
+        "read_input_registers",
+        max_retries, base_delay, cap_delay,
     )
 
 

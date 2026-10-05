@@ -9,7 +9,7 @@ from pymodbus.client.mixin import ModbusClientMixin
 from asyncio import Lock
 
 from .const import DEVICE_STATUSSES, FAULT_MESSAGES
-from .modbus_utils import try_read_registers, ReconnectionNeededError, BlockUnsupportedError
+from .modbus_utils import try_read_registers, try_read_input_registers, ReconnectionNeededError, BlockUnsupportedError
 
 DataDict: TypeAlias = dict[str, Any]
 ReadResult: TypeAlias = tuple[DataDict, list[str]]
@@ -347,6 +347,34 @@ SIDE_NET_DATA_MAP = [
     ("TOnGridOutPowerWatt", "16u", 1),
 ]
 
+# --- EV Charger Decoding Maps (HS3 with integrated charger) ---
+# Block 1: FC04 (input registers) 0x309C–0x30A9 — real-time charger data
+EV_CHARGER_REALTIME_MAP = [
+    ("ev_charge_strategy_ro", "16u", 1),
+    ("ev_charger_state", "16u", 1),
+    ("ev_voltage_l1", "16u", 0.1),
+    ("ev_current_l1", "16u", 0.1),
+    ("ev_voltage_l2", "16u", 0.1),
+    ("ev_current_l2", "16u", 0.1),
+    ("ev_voltage_l3", "16u", 0.1),
+    ("ev_current_l3", "16u", 0.1),
+    (None, "skip_bytes", 2),
+    ("ev_charge_power", "16u", 1),
+    ("ev_charge_mode", "16u", 1),
+    (None, "skip_bytes", 2),
+    ("ev_session_energy", "16u", 1),
+    ("ev_max_current", "16u", 1),
+]
+
+# Block 2: FC03 (holding registers) 0x4B12–0x4B24 — charger config
+EV_CHARGER_CONFIG_MAP = [
+    ("ev_charge_strategy", "16u", 1),
+    (None, "skip_bytes", 4),
+    ("ev_max_charge_power", "16u", 1),
+    (None, "skip_bytes", 28),
+    ("ev_dynamic_power_limit", "16u", 1),
+]
+
 # --- End Static Decoding Maps ---
 
 
@@ -360,13 +388,17 @@ async def _read_modbus_data(
     default_decoder: str = "16u",
     default_factor: float = 0.01,
     log_level_on_error: int = logging.ERROR,
+    function_code: int = 3,
 ) -> ReadResult:
     """Helper function to read and decode Modbus data with partial-error resilience."""
     errors: list[str] = []
     new_data: DataDict = {}
 
     try:
-        regs = await try_read_registers(client, lock, 1, start_address, count)
+        if function_code == 4:
+            regs = await try_read_input_registers(client, lock, 1, start_address, count)
+        else:
+            regs = await try_read_registers(client, lock, 1, start_address, count)
     except ValueError as ve:
         # Device explicitly rejected this register block (ExceptionResponse with
         # a deterministic code). Signal upstream so the hub can track failures
@@ -575,6 +607,23 @@ _DATA_READ_CONFIG = {
         "data_key": "inverter_settings",
         "default_factor": 1,
     },
+    "ev_charger_realtime": {
+        "address": 0x309C,
+        "count": 14,
+        "decode_map": EV_CHARGER_REALTIME_MAP,
+        "data_key": "ev_charger_realtime",
+        "default_factor": 1,
+        "function_code": 4,
+        "log_level_on_error": logging.DEBUG,
+    },
+    "ev_charger_config": {
+        "address": 0x4B12,
+        "count": 19,
+        "decode_map": EV_CHARGER_CONFIG_MAP,
+        "data_key": "ev_charger_config",
+        "default_factor": 1,
+        "log_level_on_error": logging.DEBUG,
+    },
 }
 
 _PHASE_READ_CONFIG = {
@@ -626,6 +675,7 @@ async def _read_configured_data(
         config["data_key"],
         default_factor=config.get("default_factor", 0.01),
         log_level_on_error=config.get("log_level_on_error", logging.ERROR),
+        function_code=config.get("function_code", 3),
     )
     _log_partial_errors(
         config["data_key"], errors, config.get("log_level_on_error", logging.ERROR)
@@ -971,3 +1021,58 @@ async def read_side_net_data(client: ModbusTcpClient, lock: Lock) -> DataDict:
 async def read_inverter_settings_data(client: ModbusTcpClient, lock: Lock) -> DataDict:
     """Reads inverter/battery setpoint registers (0x4023-0x4030)."""
     return await _read_configured_data(client, lock, "inverter_settings")
+
+
+# ============================================================================
+# EV CHARGER DATA (HS3 with integrated charger)
+# ============================================================================
+
+
+EV_CHARGER_STATES = {
+    1: "Unplugged",
+    3: "Charging",
+    5: "Connected Idle",
+    6: "Paused",
+}
+
+EV_CHARGE_MODES = {
+    0: "Off",
+    1: "Charging",
+    2: "Scheduled Waiting",
+    7: "AI Mode",
+}
+
+EV_CHARGE_STRATEGIES = {
+    0: "AI",
+    1: "Standard",
+    2: "Scheduled",
+}
+
+
+async def read_ev_charger_realtime(client: ModbusTcpClient, lock: Lock) -> DataDict:
+    """Reads EV charger real-time data via FC04 (input registers)."""
+    data = await _read_configured_data(client, lock, "ev_charger_realtime")
+    if data:
+        raw_state = data.get("ev_charger_state")
+        if raw_state is not None:
+            data["ev_charger_state_text"] = EV_CHARGER_STATES.get(
+                raw_state, f"Unknown ({raw_state})"
+            )
+        raw_mode = data.get("ev_charge_mode")
+        if raw_mode is not None:
+            data["ev_charge_mode_text"] = EV_CHARGE_MODES.get(
+                raw_mode, f"Unknown ({raw_mode})"
+            )
+    return data
+
+
+async def read_ev_charger_config(client: ModbusTcpClient, lock: Lock) -> DataDict:
+    """Reads EV charger config data via FC03 (holding registers)."""
+    data = await _read_configured_data(client, lock, "ev_charger_config")
+    if data:
+        raw_strategy = data.get("ev_charge_strategy")
+        if raw_strategy is not None:
+            data["ev_charge_strategy_text"] = EV_CHARGE_STRATEGIES.get(
+                raw_strategy, f"Unknown ({raw_strategy})"
+            )
+    return data
