@@ -171,10 +171,11 @@ Write-verified via Modbus FC06. FC04 read-back at `0x309C` mirrors the value wit
 
 | Value | Meaning |
 |-------|---------|
-| 0 | Not charging (unplugged or idle in standard mode) |
+| 0 | Not charging (unplugged or idle) |
 | 1 | Actively charging (any strategy) |
 | 2 | Scheduled mode — waiting for time window (outside schedule) |
-| 7 | AI mode — waiting for solar/smart decision |
+
+Note: Value 7 was observed once during an Oct 4 scan when switching to "AI mode" but could not be reproduced. AI mode activation failed on this unit, so the meaning of value 7 is unverified.
 
 #### Charging Power Verification
 

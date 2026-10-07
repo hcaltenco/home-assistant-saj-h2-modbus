@@ -1043,7 +1043,6 @@ EV_CHARGE_MODES = {
     0: "Off",
     1: "Charging",
     2: "Scheduled Waiting",
-    7: "AI Mode",
 }
 
 EV_CHARGE_STRATEGIES = {

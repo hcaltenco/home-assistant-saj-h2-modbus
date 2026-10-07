@@ -34,7 +34,7 @@ Scanned across 6 charger states (unplugged / idle / scheduled / surplus solar / 
 | `0x30A0` | FC04 | Voltage L2 | ×0.1 V | High |
 | `0x30A2` | FC04 | Voltage L3 | ×0.1 V | High |
 | `0x30A5` | FC04 | Total charge power | W (verified at 878W, 1047W, and 2730W) | High |
-| `0x30A6` | FC04 | Charge mode | 0=off, 1=charging, 2=sched waiting, 7=AI | High |
+| `0x30A6` | FC04 | Charge mode | 0=off, 1=charging, 2=sched waiting | High |
 | `0x30A8` | FC04 | Session energy | Wh (rate-verified against power) | Medium |
 | `0x30A9` | FC04 | Max current capacity | A (constant 32-33) | High |
 | `0x4B12` | FC03 | **Charge strategy (R/W)** | 0=off, 1=standard, 2=scheduled, 3=surplus solar | **High** |
