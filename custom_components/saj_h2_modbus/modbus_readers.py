@@ -366,13 +366,15 @@ EV_CHARGER_REALTIME_MAP = [
     ("ev_max_current", "16u", 1),
 ]
 
-# Block 2: FC03 (holding registers) 0x4B12–0x4B24 — charger config
+# Block 2: FC03 (holding registers) 0x4B12–0x4B43 — charger config
 EV_CHARGER_CONFIG_MAP = [
     ("ev_charge_strategy", "16u", 1),
     (None, "skip_bytes", 4),
     ("ev_max_charge_power", "16u", 1),
     (None, "skip_bytes", 28),
     ("ev_dynamic_power_limit", "16u", 1),
+    (None, "skip_bytes", 60),
+    ("ev_min_power_toggle", "16u", 1),
 ]
 
 # --- End Static Decoding Maps ---
@@ -618,7 +620,7 @@ _DATA_READ_CONFIG = {
     },
     "ev_charger_config": {
         "address": 0x4B12,
-        "count": 19,
+        "count": 50,
         "decode_map": EV_CHARGER_CONFIG_MAP,
         "data_key": "ev_charger_config",
         "default_factor": 1,
@@ -1030,7 +1032,9 @@ async def read_inverter_settings_data(client: ModbusTcpClient, lock: Lock) -> Da
 
 EV_CHARGER_STATES = {
     1: "Unplugged",
+    2: "Scheduled Waiting",
     3: "Charging",
+    4: "Surplus Solar Idle",
     5: "Connected Idle",
     6: "Paused",
 }
@@ -1043,9 +1047,10 @@ EV_CHARGE_MODES = {
 }
 
 EV_CHARGE_STRATEGIES = {
-    0: "AI",
+    0: "Off",
     1: "Standard",
     2: "Scheduled",
+    3: "Surplus Solar",
 }
 
 

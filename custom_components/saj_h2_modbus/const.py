@@ -2155,6 +2155,12 @@ ev_charger_info_sensors = [
         "icon": "cog-outline",
         "enable": False,
     },
+    {
+        "name": "EV Min Power Toggle",
+        "key": "ev_min_power_toggle",
+        "icon": "lightning-bolt-outline",
+        "enable": True,
+    },
 ]
 
 SENSOR_TYPES = {
