@@ -2094,12 +2094,6 @@ ev_charger_current_sensors = [
         "icon": "current-ac",
         "enable": True,
     },
-    {
-        "name": "EV Max Current Capacity",
-        "key": "ev_max_current",
-        "icon": "current-ac",
-        "enable": True,
-    },
 ]
 
 ev_charger_energy_sensors = [
@@ -2109,6 +2103,12 @@ ev_charger_energy_sensors = [
         "icon": "ev-station",
         "enable": True,
         "unit_of_measurement": UnitOfEnergy.WATT_HOUR,
+    },
+    {
+        "name": "EV Total Energy",
+        "key": "ev_total_energy",
+        "icon": "ev-station",
+        "enable": True,
     },
 ]
 

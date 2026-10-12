@@ -348,7 +348,7 @@ SIDE_NET_DATA_MAP = [
 ]
 
 # --- EV Charger Decoding Maps (HS3 with integrated charger) ---
-# Block 1: FC04 (input registers) 0x309C–0x30A9 — real-time charger data
+# Block 1: FC04 (input registers) 0x309C–0x30AA — real-time charger data
 EV_CHARGER_REALTIME_MAP = [
     ("ev_charge_strategy_ro", "16u", 1),
     ("ev_charger_state", "16u", 1),
@@ -363,7 +363,7 @@ EV_CHARGER_REALTIME_MAP = [
     ("ev_charge_mode", "16u", 1),
     (None, "skip_bytes", 2),
     ("ev_session_energy", "16u", 1),
-    ("ev_max_current", "16u", 1),
+    ("ev_total_energy", "32u", 0.001),
 ]
 
 # Block 2: FC03 (holding registers) 0x4B12–0x4B43 — charger config
@@ -611,7 +611,7 @@ _DATA_READ_CONFIG = {
     },
     "ev_charger_realtime": {
         "address": 0x309C,
-        "count": 14,
+        "count": 15,
         "decode_map": EV_CHARGER_REALTIME_MAP,
         "data_key": "ev_charger_realtime",
         "default_factor": 1,
