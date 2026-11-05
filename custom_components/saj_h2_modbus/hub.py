@@ -313,6 +313,43 @@ class SAJModbusHub(DataUpdateCoordinator[dict[str, Any]]):
     async def _set_passive_mode(self, value: int | None) -> None:
         self._set_power_state(value, "set_passive_mode")
 
+    # --- EV Charger Write Methods ---
+
+    async def set_ev_charge_strategy(self, value: int) -> None:
+        """Write EV charge strategy to 0x4B12 (0=Off, 1=Standard, 2=Scheduled, 3=Surplus Solar)."""
+        if await self._write_register(0x4B12, value):
+            async with self._data_lock:
+                self.inverter_data["ev_charge_strategy"] = value
+                self.inverter_data["ev_charge_strategy_text"] = (
+                    modbus_readers.EV_CHARGE_STRATEGIES.get(
+                        value, f"Unknown ({value})"
+                    )
+                )
+            self.async_set_updated_data(self.inverter_data)
+
+    async def set_ev_max_charge_power(self, value: int) -> None:
+        """Write EV max charge power (W) to 0x4B15."""
+        if await self._write_register(0x4B15, value):
+            async with self._data_lock:
+                self.inverter_data["ev_max_charge_power"] = value
+            self.async_set_updated_data(self.inverter_data)
+
+    async def set_ev_min_power_toggle(self, value: bool) -> None:
+        """Write EV min power toggle to 0x4B43 (0=off, 4=on)."""
+        reg_value = 4 if value else 0
+        if await self._write_register(0x4B43, reg_value):
+            async with self._data_lock:
+                self.inverter_data["ev_min_power_toggle"] = reg_value
+            self.async_set_updated_data(self.inverter_data)
+
+    async def start_ev_charging(self) -> None:
+        """Start EV charging by setting strategy to Standard (1)."""
+        await self.set_ev_charge_strategy(1)
+
+    async def stop_ev_charging(self) -> None:
+        """Stop EV charging by setting strategy to Off (0)."""
+        await self.set_ev_charge_strategy(0)
+
     async def process_pending_now(self) -> None:
         """Immediately process pending settings."""
         try:

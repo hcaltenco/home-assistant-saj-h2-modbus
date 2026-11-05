@@ -36,6 +36,8 @@ PLATFORMS: list[Platform] = [
     Platform.SWITCH,
     Platform.NUMBER,
     Platform.TEXT,
+    Platform.SELECT,
+    Platform.BUTTON,
 ]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)

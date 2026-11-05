@@ -200,6 +200,17 @@ NUMBER_DEFINITIONS = [
         "unit": None,
         "setter": "set_passive_bat_discharge_power",
     },
+    # EV Charger (HS3)
+    {
+        "key": "ev_max_charge_power",
+        "name": "EV Max Charge Power",
+        "min": 0,
+        "max": 11000,
+        "step": 100,
+        "default": 0,
+        "unit": "W",
+        "setter": "set_ev_max_charge_power",
+    },
 ]
 
 

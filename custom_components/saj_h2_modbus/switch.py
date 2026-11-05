@@ -5,6 +5,7 @@ import time
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -59,6 +60,9 @@ async def async_setup_entry(
             description=desc,
         )
         entities.append(entity)
+
+    # EV Charger (HS3) — min charging power toggle
+    entities.append(EvMinPowerSwitch(hub, device_info))
 
     async_add_entities(entities)
 
@@ -216,3 +220,34 @@ class BaseSajSwitch(CoordinatorEntity, SwitchEntity, SajBaseEntity):
             )
             return False
         return True
+
+
+class EvMinPowerSwitch(CoordinatorEntity, SwitchEntity, SajBaseEntity):
+    """Switch entity for EV charger min power toggle (0x4B43: 0=off, 4=on)."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_has_entity_name = True
+    _attr_name = "EV Min Charging Power"
+    _attr_icon = "mdi:lightning-bolt-outline"
+
+    def __init__(self, hub: SAJModbusHub, device_info: dict) -> None:
+        super().__init__(hub)
+        SajBaseEntity.__init__(self, hub, device_info)
+        self._attr_unique_id = f"{hub.name}_ev_min_power_toggle_control"
+
+    @property
+    def is_on(self) -> bool:
+        return self._hub.inverter_data.get("ev_min_power_toggle") == 4
+
+    @property
+    def available(self) -> bool:
+        return (
+            self.coordinator.last_update_success
+            and self._hub.inverter_data.get("ev_min_power_toggle") is not None
+        )
+
+    async def async_turn_on(self, **kwargs) -> None:
+        await self._hub.set_ev_min_power_toggle(True)
+
+    async def async_turn_off(self, **kwargs) -> None:
+        await self._hub.set_ev_min_power_toggle(False)
